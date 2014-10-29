@@ -852,7 +852,7 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
      * Helper method to print total Statistics
      */
     private void printOverallStatistics() {
-        System.out.println("Total time elapsed: " + timeTaken);
+        System.out.println("Total time elapsed in milliseconds: " + timeTaken);
         int bitCountForPalette = Integer.bitCount(palette.length);
         int bitsForCompressedImage = bitCountForPalette * w * h  + 24 * palette.length;
         int bitsForOriginalImage = 24 * w * h;
