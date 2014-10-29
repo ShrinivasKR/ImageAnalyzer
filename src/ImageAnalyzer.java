@@ -60,7 +60,7 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
     public ArrayList<Block> sortedBlocks; // to store sorted blocks(list L)
     public Color[] palette;	// stores the first U elements of list L
     public int[][] encodedPixels;	// to store the value each pixel in the image is encoded to
-    long timeElapsedInMS;
+    long timeTaken;
 
     JPanel viewPanel; // Where the image will be painted.
     JPopupMenu popup;
@@ -86,10 +86,10 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
         double euclideanDistance(Color c2) {
             // TODO
             // Replace this to return the distance between this color and c2.
-            int redDiff = r - c2.r;
-            int greenDiff = g - c2.g;
-            int blueDiff = b - c2.b;
-            return Math.sqrt((double)(redDiff * redDiff + greenDiff * greenDiff + blueDiff * blueDiff));
+            int differenceRed = r - c2.r;
+            int differenceGreen = g - c2.g;
+            int differenceBlue = b - c2.b;
+            return Math.sqrt((double)(differenceRed * differenceRed + differenceGreen * differenceGreen + differenceBlue * differenceBlue));
         }
     }
 
@@ -549,7 +549,7 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
         // Add your code here to create a palette using the Popularity Algorithm.
         // You may use the sort function defined below to help sort a HashMap<Block, Integer>.
         // Comment each step.
-        timeElapsedInMS = 0;
+        timeTaken = 0;
         long startTime = System.nanoTime();
         javaHashMap = new HashMap<Block, Integer>();
         Color[][] imagePixels = storeCurrPixels(biWorking);
@@ -570,15 +570,15 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
         } else {
             palette = new Color[paletteSize];
         }
-        for (int index = 0; index < palette.length; index++) {
-            Block currBlock = sortedBlocks.get(index);
+        for (int i = 0; i < palette.length; i++) {
+            Block currBlock = sortedBlocks.get(i);
             int halfBlockSize = blockSize / 2;
-            palette[index] = new Color(currBlock.getRed() * blockSize + halfBlockSize,
+            palette[i] = new Color(currBlock.getRed() * blockSize + halfBlockSize,
                     currBlock.getGreen() * blockSize + halfBlockSize,
                     currBlock.getBlue() * blockSize + halfBlockSize);
         }
         long timeTaken = (System.nanoTime() - startTime) / 1000000;
-        timeElapsedInMS = timeTaken;
+        this.timeTaken = timeTaken;
         System.out.println("Time taken to build table (in ms): " + timeTaken);
         printStats();
     }
@@ -619,7 +619,7 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
             }
         }
         long timeTaken = (System.nanoTime() - startTime) / 1000000;
-        timeElapsedInMS += timeTaken;
+        this.timeTaken += timeTaken;
         System.out.println("Time taken to encode slowly (in ms): " + timeTaken);
         printStats();
     }
@@ -656,7 +656,7 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
         }
         long endTime = System.nanoTime();
         long timeTaken = (endTime - startTime) / 1000000;
-        timeElapsedInMS += timeTaken;
+        this.timeTaken += timeTaken;
         System.out.println("Time taken to encode fast (in ms): " + timeTaken);
         printStats();
     }
@@ -677,9 +677,9 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
         double averageEncodingError = computeError(originalPixels, biWorking);
         System.out.println("Average encoding error:" + averageEncodingError);
         long timeTaken = (System.nanoTime() - startTime) / 1000000;
-        timeElapsedInMS += timeTaken;
+        this.timeTaken += timeTaken;
         printStatsForFinishedImage();
-        timeElapsedInMS = 0;
+        this.timeTaken = 0;
     }
 
     // Returns an array of Colors based on the pixels from a BufferedImage
@@ -766,7 +766,7 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
     }
 
     private void printStatsForFinishedImage() {
-        System.out.println("Total time elapsed: " + timeElapsedInMS);
+        System.out.println("Total time elapsed: " + timeTaken);
         int bitCountForPalette = Integer.bitCount(palette.length);
         int bitsForCompressedImage = bitCountForPalette * w * h  + 24 * palette.length;
         int bitsForOriginalImage = 24 * w * h;
