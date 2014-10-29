@@ -557,6 +557,10 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
         }
     }
 
+    /**
+     * Changes hash function item check states and displays which hash function is selected
+     * @param hc
+     */
     public void setHashFunctionChoice(int hc) {
         hashFunctionChoice = hc;
         System.out.println("Hash function choice is now "+hashFunctionChoice);
@@ -604,43 +608,46 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
         }
     }
 
+    /**
+     * Creates a palette using the Popularity Algorithm and sorts it by weight
+     * @param paletteSize
+     */
     public void buildPalette(int paletteSize) {
         // TODO
-        // Creates a palette using the Popularity Algorithm.
         // You may use the sort function defined below to help sort a HashMap<Block, Integer>.
         // Comment each step.
-        timeTaken = 0;
-        long startTime = System.nanoTime();
-        javaHashMap = new HashMap<Block, Integer>();
-        Color[][] imagePixels = storeCurrPixels(biWorking);
-        for (Color[] pixelRow: imagePixels) {
-            for (Color currPixel: pixelRow) {
-                Block currBlock = new Block(currPixel.r / blockSize, currPixel.g / blockSize, currPixel.b / blockSize);
-                if (javaHashMap.containsKey(currBlock)) {
-                    int lastValue = javaHashMap.get(currBlock).intValue();
-                    javaHashMap.put(currBlock, Integer.valueOf(lastValue + 1));
-                } else {
-                    javaHashMap.put(currBlock, Integer.valueOf(1));
+        timeTaken = 0; //Initializes the total time taken for execution to 0
+        long startTime = System.nanoTime(); //starts timing execution
+        javaHashMap = new HashMap<Block, Integer>(); //initializes the javaHashMap as an empty HashMap
+        Color[][] imagePixels = storeCurrPixels(biWorking); //saves the pixels of the current working image
+        for (Color[] pixelRow: imagePixels) { //goes through the row of pixels
+            for (Color currPixel: pixelRow) { //goes through each pixel in the row
+                Block currBlock = new Block(currPixel.r / blockSize, currPixel.g / blockSize, currPixel.b / blockSize); //creates a block for the pixel
+                if (javaHashMap.containsKey(currBlock)) { //check if the hash map contains the current block
+                    int lastValue = javaHashMap.get(currBlock).intValue(); //gets the current weight of the block
+                    javaHashMap.put(currBlock, Integer.valueOf(lastValue + 1)); //increases the weight by one if the block is already here
+                } else { //if the block is not contained
+                    javaHashMap.put(currBlock, Integer.valueOf(1)); //places the block with weight of one
                 }
             }
         }
-        sortedBlocks = sort(javaHashMap);
-        if (sortedBlocks.size() < paletteSize) {
-            palette = new Color[sortedBlocks.size()];
-        } else {
-            palette = new Color[paletteSize];
+        sortedBlocks = sort(javaHashMap); //sorts the hash map by weight
+        if (sortedBlocks.size() < paletteSize) { //checks if the unique blocks is fewer than palette size
+            palette = new Color[sortedBlocks.size()]; //creates a new palette of size the number of unique blocks
+        } else { //if the unique blocks is not fewer than palette size
+            palette = new Color[paletteSize]; //creates a new palette of size the given palette size if colors are there
         }
-        for (int i = 0; i < palette.length; i++) {
-            Block currBlock = sortedBlocks.get(i);
-            int halfBlockSize = blockSize / 2;
-            palette[i] = new Color(currBlock.getRed() * blockSize + halfBlockSize,
+        for (int i = 0; i < palette.length; i++) { //goes through the palette
+            Block currBlock = sortedBlocks.get(i); //gets the current block
+            int halfBlockSize = blockSize / 2; //finds half the current block's size
+            palette[i] = new Color(currBlock.getRed() * blockSize + halfBlockSize, //calculates the representative color
                     currBlock.getGreen() * blockSize + halfBlockSize,
                     currBlock.getBlue() * blockSize + halfBlockSize);
         }
-        long timeTaken = (System.nanoTime() - startTime) / 1000000;
-        this.timeTaken = timeTaken;
-        System.out.println("Time taken to build table (in ms): " + timeTaken);
-        printStats();
+        long timeTaken = (System.nanoTime() - startTime) / 1000000; //calculates the time taken to build the palette
+        this.timeTaken = timeTaken; //sets it to the total time taken in execution so far
+        System.out.println("Elapsed time in milliseconds to build the table: " + timeTaken); //prints the time taken to build the table
+        printStats(); //prints the rest of the statistics using a helper method
     }
 
     // returns a sorted(largest weight to smallest weight) ArrayList of the blocks in HashMap<Block, Integer>
@@ -669,7 +676,9 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
                 int indexWithClosestColor = 0;
                 double closestColorDistance = currentPixel.euclideanDistance(palette[0]);
                 for (int colorIndex = 1; colorIndex < palette.length; colorIndex++) {
+                    //Finds the distance between current pixel and palette color
                     double colorDist = currentPixel.euclideanDistance(palette[colorIndex]);
+                    //Checks if the color is already the closest
                     if (colorDist < closestColorDistance) {
                         indexWithClosestColor = colorIndex;
                         closestColorDistance = colorDist;
@@ -680,7 +689,7 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
         }
         long timeTaken = (System.nanoTime() - startTime) / 1000000;
         this.timeTaken += timeTaken;
-        System.out.println("Time taken to encode slowly (in ms): " + timeTaken);
+        System.out.println("Elapsed time in milliseconds to encode the pixels slowly: " + timeTaken);
         printStats();
     }
 
@@ -689,6 +698,7 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
         // Add your code here to determine the encoded pixel values and store them in the array encodedPixels (second method, using sortedBlocks and/or javaHashMap again).
         long startTime = System.nanoTime();
         Set<Block> blocksInHash= javaHashMap.keySet();
+        // The weight for each block is replaced by the closest palette color's index
         for(Block colorBlock: blocksInHash) {
             int halfBlockSize = blockSize / 2;
             Color representativeColor = new Color(colorBlock.getRed() * blockSize + halfBlockSize,
@@ -707,6 +717,7 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
         }
         Color[][] currentPixels = storeCurrPixels(biWorking);
         encodedPixels = new int[h][w];
+        //Represents the pixels with its closest palette pixels
         for (int row = 0; row < h; row ++) {
             for (int col = 0; col < w; col++) {
                 Color currentPixel = currentPixels[row][col];
@@ -717,7 +728,7 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
         long endTime = System.nanoTime();
         long timeTaken = (endTime - startTime) / 1000000;
         this.timeTaken += timeTaken;
-        System.out.println("Time taken to encode fast (in ms): " + timeTaken);
+        System.out.println("Elapsed time in milliseconds to encode the pixels quickly: " + timeTaken);
         printStats();
     }
 
@@ -735,7 +746,7 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
         }
         repaint();
         double averageEncodingError = computeError(originalPixels, biWorking);
-        System.out.println("Average encoding error:" + averageEncodingError);
+        System.out.println("Average encoding error: " + averageEncodingError);
         long timeTaken = (System.nanoTime() - startTime) / 1000000;
         this.timeTaken += timeTaken;
         printOverallStatistics();
