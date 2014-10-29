@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Set;
 
 import javax.imageio.ImageIO;
 import javax.swing.JCheckBoxMenuItem;
@@ -59,6 +60,7 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
     public ArrayList<Block> sortedBlocks; // to store sorted blocks(list L)
     public Color[] palette;	// stores the first U elements of list L
     public int[][] encodedPixels;	// to store the value each pixel in the image is encoded to
+    long timeElapsedInMS;
 
     JPanel viewPanel; // Where the image will be painted.
     JPopupMenu popup;
@@ -547,6 +549,7 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
         // Add your code here to create a palette using the Popularity Algorithm.
         // You may use the sort function defined below to help sort a HashMap<Block, Integer>.
         // Comment each step.
+        timeElapsedInMS = 0;
         long startTime = System.nanoTime();
         javaHashMap = new HashMap<Block, Integer>();
         Color[][] imagePixels = storeCurrPixels(biWorking);
@@ -555,7 +558,7 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
                 Block currBlock = new Block(currPixel.r / blockSize, currPixel.g / blockSize, currPixel.b / blockSize);
                 if (javaHashMap.containsKey(currBlock)) {
                     int lastValue = javaHashMap.get(currBlock).intValue();
-                    javaHashMap.put(currBlock, new Integer(lastValue + 1));
+                    javaHashMap.put(currBlock, Integer.valueOf(lastValue + 1));
                 } else {
                     javaHashMap.put(currBlock, Integer.valueOf(1));
                 }
@@ -569,12 +572,15 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
         }
         for (int index = 0; index < palette.length; index++) {
             Block currBlock = sortedBlocks.get(index);
-            palette[index] = new Color(currBlock.getRed() * blockSize, currBlock.getGreen() * blockSize,
-                    currBlock.getBlue() * blockSize);
+            int halfBlockSize = blockSize / 2;
+            palette[index] = new Color(currBlock.getRed() * blockSize + halfBlockSize,
+                    currBlock.getGreen() * blockSize + halfBlockSize,
+                    currBlock.getBlue() * blockSize + halfBlockSize);
         }
-
-        long endTime = System.nanoTime();
-        System.out.println("Time taken to build table (in ms): " + (endTime - startTime) / 1000000);
+        long timeTaken = (System.nanoTime() - startTime) / 1000000;
+        timeElapsedInMS = timeTaken;
+        System.out.println("Time taken to build table (in ms): " + timeTaken);
+        printStats();
     }
 
     // returns a sorted(largest weight to smallest weight) ArrayList of the blocks in HashMap<Block, Integer>
@@ -595,15 +601,15 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
         // TODO
         // Add your code here to determine the encoded pixel values and store them in the array encodedPixels (first method).
         long startTime = System.nanoTime();
-        Color[][] currPixels = storeCurrPixels(biWorking);
+        Color[][] currentPixels = storeCurrPixels(biWorking);
         encodedPixels = new int[h][w];
         for (int row = 0; row < h; row++) {
             for (int col = 0; col < w; col++) {
-                Color currPixel = currPixels[row][col];
+                Color currentPixel = currentPixels[row][col];
                 int indexWithClosestColor = 0;
-                double closestColorDistance = currPixel.euclideanDistance(palette[0]);
+                double closestColorDistance = currentPixel.euclideanDistance(palette[0]);
                 for (int colorIndex = 1; colorIndex < palette.length; colorIndex++) {
-                    double colorDist = currPixel.euclideanDistance(palette[colorIndex]);
+                    double colorDist = currentPixel.euclideanDistance(palette[colorIndex]);
                     if (colorDist < closestColorDistance) {
                         indexWithClosestColor = colorIndex;
                         closestColorDistance = colorDist;
@@ -612,36 +618,51 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
                 encodedPixels[row][col] = indexWithClosestColor;
             }
         }
-        long endTime = System.nanoTime();
-        System.out.println("Time taken to encode: " + (endTime - startTime) / 1000000);
+        long timeTaken = (System.nanoTime() - startTime) / 1000000;
+        timeElapsedInMS += timeTaken;
+        System.out.println("Time taken to encode slowly (in ms): " + timeTaken);
+        printStats();
     }
 
     public void encodeFast() {
         // TODO
         // Add your code here to determine the encoded pixel values and store them in the array encodedPixels (second method, using sortedBlocks and/or javaHashMap again).
-        Color[][] currPixels = storeCurrPixels(biWorking);
-
-        encodedPixels = new int[h][w];
-        int palLength = palette.length;
-        for (int row = 0; row < h; row++) {
-            for (int col = 0; col < w; col++) {
-                Color currPixel = currPixels[row][col];
-                int red = currPixel.r * palLength + palLength / 2;
-                int green = currPixel.g * palLength + palLength / 2;
-                int blue = currPixel.b * palLength + palLength / 2;
-                Color repColor = new Color(red, green, blue);
-                int indexWithClosestColor = 0;
-                double closestColorDistance = repColor.euclideanDistance(palette[0]);
-                for (int colorIndex = 1; colorIndex < palLength; colorIndex++) {
-                    indexWithClosestColor = colorIndex;
-                    closestColorDistance = repColor.euclideanDistance(palette[colorIndex]);
+        long startTime = System.nanoTime();
+        Set<Block> blocksInHash= javaHashMap.keySet();
+        for(Block colorBlock: blocksInHash) {
+            int halfBlockSize = blockSize / 2;
+            Color representativeColor = new Color(colorBlock.getRed() * blockSize + halfBlockSize,
+                    colorBlock.getGreen() * blockSize + halfBlockSize,
+                    colorBlock.getBlue() * blockSize + halfBlockSize);
+            int closestColorIndex = 0;
+            double closestColorDistance = representativeColor.euclideanDistance(palette[0]);
+            for (int index = 1; index < palette.length; index++) {
+                double colorDistance = representativeColor.euclideanDistance(palette[index]);
+                if(closestColorDistance > colorDistance) {
+                    closestColorIndex = index;
+                    closestColorDistance = colorDistance;
                 }
-
+            }
+            javaHashMap.put(colorBlock, Integer.valueOf(closestColorIndex));
+        }
+        Color[][] currentPixels = storeCurrPixels(biWorking);
+        encodedPixels = new int[h][w];
+        for (int row = 0; row < h; row ++) {
+            for (int col = 0; col < w; col++) {
+                Color currentPixel = currentPixels[row][col];
+                Block currentPixelBlock = new Block(currentPixel.r / blockSize, currentPixel.g / blockSize, currentPixel.b / blockSize);
+                encodedPixels[row][col] = javaHashMap.get(currentPixelBlock);
             }
         }
+        long endTime = System.nanoTime();
+        long timeTaken = (endTime - startTime) / 1000000;
+        timeElapsedInMS += timeTaken;
+        System.out.println("Time taken to encode fast (in ms): " + timeTaken);
+        printStats();
     }
 
     public void decode() {
+        long startTime = System.nanoTime();
         Color[][] originalPixels = storeCurrPixels(biWorking);
         // TODO
         // Add your code here to determine RGB values for each pixel from the encoded information, and
@@ -655,6 +676,10 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
         repaint();
         double averageEncodingError = computeError(originalPixels, biWorking);
         System.out.println("Average encoding error:" + averageEncodingError);
+        long timeTaken = (System.nanoTime() - startTime) / 1000000;
+        timeElapsedInMS += timeTaken;
+        printStatsForFinishedImage();
+        timeElapsedInMS = 0;
     }
 
     // Returns an array of Colors based on the pixels from a BufferedImage
@@ -737,9 +762,15 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
     private void printStats() {
         System.out.println("Current Hashing Function: " + hashFunctionChoice);
         System.out.println("Number of pixels in image: " + w * h);
-        System.out.println("Number of distinct keys: " + javaHashMap.size());
-        System.out.println("Capacity of hash table: " + javaHashMap.size());
-        System.out.println("Capacity of hash table: " + javaHashMap.size());
+        System.out.println("Number of distinct bins: " + javaHashMap.size());
+    }
+
+    private void printStatsForFinishedImage() {
+        System.out.println("Total time elapsed: " + timeElapsedInMS);
+        int bitCountForPalette = Integer.bitCount(palette.length);
+        int bitsForCompressedImage = bitCountForPalette * w * h  + 24 * palette.length;
+        int bitsForOriginalImage = 24 * w * h;
+        System.out.println("Compression Ratio: " + ((double) bitsForOriginalImage) / bitsForCompressedImage);
     }
 
     /* This main method can be used to run the application. */
