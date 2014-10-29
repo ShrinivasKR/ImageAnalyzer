@@ -1,6 +1,6 @@
 /*
  * ImageAnalyzer.java
- * Starter code for A3 // Change this line to "A3 Solution by " + YOUR_NAME and UWNetID.
+ * Starter code for A3 // A3 Solution by Shrinivas Kopparam Ramanath  shrini 1167430.
  * 
  * 
  * See also the file CustomHashtable.java for use in the extra credit options.
@@ -76,44 +76,83 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
 
     JFileChooser fileChooser; // For loading and saving images.
 
+    /**
+     * Color object  of rgb values
+     */
     public class Color {
         int r, g, b;
 
+        /**
+         * Constructor method for Color Object
+         * @param r value for red
+         * @param g value for green
+         * @param b value for blue
+         */
         Color(int r, int g, int b) {
             this.r = r; this.g = g; this.b = b;
         }
 
+        /**
+         * Calculates the euclidean distance between two color objects
+         * @param c2 a different color object
+         * @return the euclidean distance between this color object and the other color object being passed in
+         */
         double euclideanDistance(Color c2) {
             // TODO
             // Replace this to return the distance between this color and c2.
             int differenceRed = r - c2.r;
             int differenceGreen = g - c2.g;
             int differenceBlue = b - c2.b;
-            return Math.sqrt((double)(differenceRed * differenceRed + differenceGreen * differenceGreen + differenceBlue * differenceBlue));
+            return Math.sqrt((Math.pow(differenceRed, 2)  + Math.pow(differenceGreen, 2) + Math.pow(differenceBlue, 2)));
         }
     }
 
+    /**
+     *
+     */
     public class Block {
         // TODO
         // Implement your block methods here.  hashCode is done for you, but you still need to write
         // the bodies for h1, h2, and h3 near the end of this file.
         // Include necessary fields, constructor and remember to override the equals and toString methods.
+
+        /**
+         * variables for red, green and blue in block object
+         */
         private int red, green, blue;
 
+        /**
+         * Constructor method of Block object
+         * @param red for value of red
+         * @param green for value of green
+         * @param blue for value of blue
+         */
         public Block (int red, int green, int blue) {
             this.red = red;
             this.green = green;
             this.blue = blue;
         }
 
+        /**
+         * Provides value of red
+         * @return int red
+         */
         public int getRed() {
             return red;
         }
 
+        /**
+         * Provides value of green
+         * @return int green
+         */
         public int getGreen() {
             return green;
         }
 
+        /**
+         * Provides value of blue
+         * @return int blue
+         */
         public int getBlue() {
             return blue;
         }
@@ -130,11 +169,24 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
             }
         }
 
+        /**
+         * Checks if this block is equal to the other block passed in
+         * @param givenObject the other block
+         * @return boolean true if equal and false if not
+         */
         public boolean equals(Object givenObject) {
             return givenObject != null && givenObject.getClass() == getClass()
                     && green == ((Block)givenObject).getGreen()
                     && red == ((Block)givenObject).getRed()
                     && blue == ((Block)givenObject).getBlue();
+        }
+
+        /**
+         * A method to represent the Block in String format
+         * @return String representation of Block
+         */
+        public String toString() {
+            return ("Red Value: " + red + ", Green Value: " + green + ", Blue Value: " + blue);
         }
     }
 
@@ -388,6 +440,10 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
         repaint();
     }
 
+    /**
+     * Enables and disables Palette Menu Items as required using helper methods and sends the command to build a palette when the menu item is selected
+     * @param mi
+     */
     void handlePaletteMenu(JMenuItem mi){
         System.out.println("A palette menu item was selected.");
         if (mi==createPItem2) {
@@ -421,6 +477,10 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
 
     }
 
+    /**
+     * Enables and disables the Encode Menu Items as needed using helper methods and also sends the command to encode or decode when a menu item is selected
+     * @param mi
+     */
     void handleEncodeMenu(JMenuItem mi){
         System.out.println("An encode menu item was selected.");
         if (mi==encodeSSItem){
@@ -501,7 +561,7 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
         hashFunctionChoice = hc;
         System.out.println("Hash function choice is now "+hashFunctionChoice);
         // TODO
-        // Add code to update the menu item states appropriately.
+        // Updates the menu item states appropriately.
         switch (hc) {
             case 1:
                 hashFunctionItem1.setSelected(true);
@@ -524,7 +584,7 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
     public void setBlockSize(int bs) {
         blockSize = bs;
         // TODO
-        // Add code to update the menu item states appropriately.
+        // Updates the menu item states appropriately.
         switch (bs) {
             case 4:
                 selectBItem4.setSelected(true);
@@ -546,7 +606,7 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
 
     public void buildPalette(int paletteSize) {
         // TODO
-        // Add your code here to create a palette using the Popularity Algorithm.
+        // Creates a palette using the Popularity Algorithm.
         // You may use the sort function defined below to help sort a HashMap<Block, Integer>.
         // Comment each step.
         timeTaken = 0;
@@ -678,7 +738,7 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
         System.out.println("Average encoding error:" + averageEncodingError);
         long timeTaken = (System.nanoTime() - startTime) / 1000000;
         this.timeTaken += timeTaken;
-        printStatsForFinishedImage();
+        printOverallStatistics();
         this.timeTaken = 0;
     }
 
@@ -741,31 +801,46 @@ public class ImageAnalyzer extends JFrame implements ActionListener {
         return stringToBeHashed.hashCode();
     }
 
+    /**
+     * Helper method to enable encode menu items and disable the decode menu item when decode option is used
+     */
     private void enableEncodeMenuItems() {
         encodeFItem.setEnabled(true);
         encodeSSItem.setEnabled(true);
         decodeItem.setEnabled(false);
     }
 
+    /**
+     * Helper method to disable encode menu items and enable the decode menu item when decode option is used
+     */
     private void disableEncodeMenuItems() {
         encodeFItem.setEnabled(false);
         encodeSSItem.setEnabled(false);
         decodeItem.setEnabled(true);
     }
 
+    /**
+     * Helper method to disable encode menu items
+     */
     private void disableEncodeDecodeMenuItems() {
         encodeFItem.setEnabled(false);
         encodeSSItem.setEnabled(false);
         decodeItem.setEnabled(false);
     }
 
+    /**
+     * Helper method to print Statistics
+     */
     private void printStats() {
         System.out.println("Current Hashing Function: " + hashFunctionChoice);
         System.out.println("Number of pixels in image: " + w * h);
         System.out.println("Number of distinct bins: " + javaHashMap.size());
     }
 
-    private void printStatsForFinishedImage() {
+    /**
+     * Helper method to print total Statistics
+     */
+    private void printOverallStatistics() {
         System.out.println("Total time elapsed: " + timeTaken);
         int bitCountForPalette = Integer.bitCount(palette.length);
         int bitsForCompressedImage = bitCountForPalette * w * h  + 24 * palette.length;
